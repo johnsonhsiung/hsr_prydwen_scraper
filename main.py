@@ -157,9 +157,6 @@ for snapshot_url in snapshot_urls:
     
     time.sleep(5)  # Be polite to the Wayback Machine servers
 
-# Save to JSON
-with open("tier_list_history.json", "w") as f:
-    json.dump(historical_data, f, indent=4)
 
 print("Historical data saved to tier_list_history.json!")
 

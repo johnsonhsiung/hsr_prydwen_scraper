@@ -2,6 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 from PIL import Image
 from io import BytesIO
+import os
 
 
 
@@ -25,6 +26,9 @@ def scrape_tier_list(url):
 
     # Find all tier sections that start with 'custom-tier'
     tier_sections = tier_list_page.find_all("div", class_=lambda c: c and c.startswith("custom-tier"))
+    file_path = f"images/"
+    # Create the "/images" directory if it doesn’t exist
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
     for tier_section in tier_sections:
         # Get all class names
@@ -76,5 +80,6 @@ def download_and_convert_image(image_url, save_path):
 IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
 
 url = "https://www.prydwen.gg/star-rail/tier-list/"
+
 scrape_tier_list(url)
 
