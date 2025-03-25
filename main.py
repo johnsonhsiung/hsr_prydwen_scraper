@@ -125,7 +125,7 @@ snapshot_urls = get_snapshots(tier_list_url)
 
 
 """
-# Example usage (replace with an actual archived URL)
+
 test_url = "https://webcf.waybackmachine.org/web/20240501052802/https://www.prydwen.gg/star-rail/tier-list"
 tier_data = scrape_tier_list(test_url)
 
