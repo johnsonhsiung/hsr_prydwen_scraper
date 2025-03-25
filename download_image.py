@@ -57,7 +57,7 @@ def scrape_tier_list(url):
                 characters.add(name)
                 img_source = img.get("src")
                 if img_source:
-                    download_and_convert_image(base_url + img_source, f"{name}.png")
+                    download_and_convert_image(base_url + img_source, f"images/{name}.png")
 
 
 def download_and_convert_image(image_url, save_path):
