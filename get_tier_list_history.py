@@ -5,34 +5,29 @@ import datetime
 import time 
 
 
-IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
-
-WAYBACK_CDX_API = "http://web.archive.org/cdx/search/cdx"
-
-SAVE_PATH = "historical_data.json"
 
 
 
-def save_progress():
+
+def save_progress(historical_data, save_path):
     """Save scraped data to a JSON file."""
-    with open(SAVE_PATH, "w", encoding="utf-8") as f:
+    with open(save_path, "w", encoding="utf-8") as f:
         json.dump(historical_data, f, indent=4)
     print("✅ Progress saved!")
 
-def get_snapshots(url, from_date="20230426", to_date="20250325", block_days=21):
+def get_snapshots(url, from_date="20230426", block_days=21):
     """
-    Fetch snapshots from the Wayback Machine API and filter them to include only one every ~3 weeks.
+    Fetch snapshots from the Wayback Machine API from start date to present and filter them to include only one every patch. 
     
     :param url: The original URL to search for.
     :param from_date: Start date (YYYYMMDD).
-    :param to_date: End date (YYYYMMDD).
     :param min_gap_days: Minimum days between snapshots.
     :return: List of filtered snapshot URLs.
     """
+    WAYBACK_CDX_API = "http://web.archive.org/cdx/search/cdx"
     params = {
         "url": url,
         "from": from_date,
-        "to": to_date,
         "fl": "timestamp,original",
         "filter": "statuscode:200",
         "output": "json"
@@ -65,6 +60,7 @@ def get_snapshots(url, from_date="20230426", to_date="20250325", block_days=21):
 
 def scrape_tier_list(url):
     print(f"Scraping: {url}")
+    IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
     response = requests.get(url)
 
     if response.status_code != 200:
@@ -118,45 +114,36 @@ def scrape_tier_list(url):
             tiers[tier_name] = list(characters)
 
     return tiers
-
-
-tier_list_url = "https://www.prydwen.gg/star-rail/tier-list/"
-snapshot_urls = get_snapshots(tier_list_url)
-
-
-"""
-
-test_url = "https://webcf.waybackmachine.org/web/20240501052802/https://www.prydwen.gg/star-rail/tier-list"
-tier_data = scrape_tier_list(test_url)
-
-# Save to JSON
-if tier_data:
-    with open("tier_list.json", "w") as f:
-        json.dump(tier_data, f, indent=4)
+def get_tier_lists(tier_list_url, save_path):
+    snapshot_urls = get_snapshots(tier_list_url)
     
-"""
-# Load existing data if available
-try:
-    with open(SAVE_PATH, "r", encoding="utf-8") as f:
-        historical_data = json.load(f)
-except (FileNotFoundError, json.JSONDecodeError):
-    historical_data = {}
 
-# Scrape each snapshot
-for snapshot_url in snapshot_urls:
-    timestamp = snapshot_url.split("/")[4]  # Extract the date (e.g., 20240325035020)
-    date_str = timestamp[:8]  # Keep only YYYYMMDD
-    if date_str in historical_data:
-        print("Already scraped, skipping...")
-        continue
-    
-    tier_data = scrape_tier_list(snapshot_url)
-    if tier_data:
-        historical_data[date_str] = tier_data  # Store with date key
-        save_progress()
-    
-    time.sleep(5)  # Be polite to the Wayback Machine servers
+    # Load existing data if available
+    try:
+        with open(save_path, "r", encoding="utf-8") as f:
+            historical_data = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        historical_data = {}
 
+    # Scrape each snapshot
+    for snapshot_url in snapshot_urls:
+        timestamp = snapshot_url.split("/")[4]  # Extract the date (e.g., 20240325035020)
+        date_str = timestamp[:8]  # Keep only YYYYMMDD
+        if date_str in historical_data:
+            print("Already scraped, skipping...")
+            continue
+        
+        tier_data = scrape_tier_list(snapshot_url)
+        if tier_data:
+            historical_data[date_str] = tier_data  # Store with date key
+            save_progress(historical_data, save_path)
+        
+        time.sleep(5)  # Be polite to the Wayback Machine servers
+        
+def main():
+    tier_list_url = "https://www.prydwen.gg/star-rail/tier-list/"
+    save_path = "historical_data.json"
+    get_tier_lists(tier_list_url, save_path) # might result in too many requests, try rerunning after a while if wbm blocks you 
 
-print("Historical data saved to tier_list_history.json!")
-
+if __name__ == "__main__":
+    main() 

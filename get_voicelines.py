@@ -4,12 +4,6 @@ import requests
 from bs4 import BeautifulSoup
 import os 
 
-
-
-
-def clean_name(character_name):
-    # Use regex to replace anything that's not a letter or space with an empty string
-    return re.sub(r'[^a-zA-Z ]', '', character_name)
 def scrape_voicelines(url, character):
     print(f"Scraping: {url}")
     response = requests.get(url)
@@ -41,25 +35,61 @@ def scrape_voicelines(url, character):
         # Create the "/voice" directory if it doesn’t exist
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         content = download_response.content
-        print("Response length:", len(content))
-        print("First 100 bytes:", content[:100])
         # Save the file
         with open(file_path, "wb") as f:
             f.write(download_response.content)
         print(f"Downloaded to {file_path} successfully!")
+def get_character_set(url):
+    IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
+   
+    print(f"Scraping: {url}")
+    response = requests.get(url)
 
+    if response.status_code != 200:
+        print(f"Failed to retrieve {url}")
+        return None
+
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    # Find the main container
+    tier_list_page = soup.find("div", class_="tier-list-page")
+    if not tier_list_page:
+        print("Tier list container not found!")
+        return None
+
+    # Find all tier sections that start with 'custom-tier'
+    tier_sections = tier_list_page.find_all("div", class_=lambda c: c and c.startswith("custom-tier"))
+    characters = set() 
+    for tier_section in tier_sections:
+        # Get all class names
+        class_list = tier_section["class"]
+
+        # Extract the class that contains the tier name (e.g., "tier-s-plus", "tier-a")
+        tier_class = next((c for c in class_list if c.startswith("tier-")), None)
+        
+        if not tier_class:
+            continue  # Skip if no valid tier class is found
+
+        # Find all characters in this tier
+        
+
+        # Extract names from <span class="emp-name">
+        for char in tier_section.find_all("span", class_="emp-name"):
+            name = char.text.strip()
+            if name not in IRRELEVANT_NAMES:
+                characters.add(name)
+
+        # Extract names from <img alt="CharacterName">
+        for img in tier_section.find_all("img", alt=True):
+            name = img["alt"].strip()
+            if name not in IRRELEVANT_NAMES:
+                characters.add(name)
+    return characters
 def main():
-    # Load JSON data
-    with open("tier_list_history.json", "r") as file:
-        tier_data = json.load(file)
+    url = "https://www.prydwen.gg/star-rail/tier-list/"
 
-    # Get all unique characters
-    characters = set()
-    for snapshot in tier_data.values():
-        for tier in snapshot.values():
-            for char_name in tier:
-                characters.add(char_name)
-    
+    characters = get_character_set(url)
+
     for character in characters:
         formatted_char = character.replace(' ', '_')
         print(f"Getting voiceline for {formatted_char}")

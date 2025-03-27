@@ -7,6 +7,7 @@ import os
 
 
 def scrape_tier_list(url):
+    IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
     print(f"Scraping: {url}")
     response = requests.get(url)
     base_url = "https://www.prydwen.gg"
@@ -62,6 +63,7 @@ def scrape_tier_list(url):
                 img_source = img.get("src")
                 if img_source:
                     download_and_convert_image(base_url + img_source, f"images/{name}.png")
+        print(characters)
 
 
 def download_and_convert_image(image_url, save_path):
@@ -77,9 +79,9 @@ def download_and_convert_image(image_url, save_path):
     else:
         print("Failed to download image")
 
-IRRELEVANT_NAMES = ["Wind", "Fire", "Lightning", "Ice", "Physical", "Quantum", "Imaginary", ""]
+def main():
+    url = "https://www.prydwen.gg/star-rail/tier-list/"
+    scrape_tier_list(url)
 
-url = "https://www.prydwen.gg/star-rail/tier-list/"
-
-scrape_tier_list(url)
-
+if __name__ == "__main__":
+    main()
